@@ -266,7 +266,7 @@ module TestSummaryBuildkitePlugin
 
       def summary(failure)
         data = attributes(failure)
-        name = data[:'test-case.fullname']
+        name = data[:'test-case.classname'] + "." + data[:'test-case.name']
         "#{name}"
       end
 
