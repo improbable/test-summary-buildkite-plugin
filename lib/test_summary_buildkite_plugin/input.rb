@@ -38,7 +38,7 @@ module TestSummaryBuildkitePlugin
         @files ||= begin
           FileUtils.mkpath(WORKDIR)
           Agent.run('artifact', 'download', artifact_path, WORKDIR)
-          Dir.glob("#{WORKDIR}/#{artifact_path}")
+          Dir.glob("#{WORKDIR}/**/*")
         rescue Agent::CommandFailed => err
           if fail_on_error
             raise
@@ -247,11 +247,81 @@ module TestSummaryBuildkitePlugin
       end
     end
 
+    class NUnit < Base
+      def file_contents_to_failures(str)
+        failures = []
+        xml = REXML::Document.new(str)
+        testcases(xml).each do |testcase|
+          testcase.elements.each('failure') do |failure|
+            failures << Failure::Structured.new(
+              summary: summary(failure),
+              message: message(failure),
+              details: details(failure)
+            )
+          end
+        end
+
+        failures
+      end
+
+      def summary(failure)
+        data = attributes(failure)
+        name = data[:'test-case.classname'] + "." + data[:'test-case.name']
+        "#{name}"
+      end
+
+      def message(failure)
+        message = failure.elements['message'].text
+        "#{message}"
+      end
+
+      def details(failure)
+        message = failure.elements['message'].text
+        stack_trace = failure.elements['stack-trace']
+        detail = if !stack_trace.nil? then "#{stack_trace.text}" else "" end
+        "#{message}\n#{detail}"
+      end
+
+      def attributes(failure)
+        # If elements are used in the format string but don't exist in the map, pretend they're blank
+        acc = Hash.new('')
+        elem = failure
+        until elem.parent.nil?
+          elem.attributes.each do |attr_name, attr_value|
+            acc["#{elem.name}.#{attr_name}".to_sym] = attr_value
+          end
+          elem = elem.parent
+        end
+        acc
+      end
+
+      def testcases(doc)
+        test_suites = []
+        test_cases = []
+
+        doc.elements['test-run'].elements.each('test-suite') do |testsuite|
+          test_suites << testsuite
+        end
+
+        while test_suites.length != 0 do
+          testsuite = test_suites.shift()
+          testsuite.elements.each('test-suite') do |child_testsuite| 
+            test_suites << child_testsuite
+          end
+          testsuite.elements.each('test-case') do |testcase| 
+            test_cases << testcase
+          end
+        end
+        test_cases
+      end
+    end
+
     TYPES = {
       oneline: Input::OneLine,
       junit: Input::JUnit,
       tap: Input::Tap,
-      checkstyle: Input::Checkstyle
+      checkstyle: Input::Checkstyle,
+      nunit: Input::NUnit
     }.freeze
   end
 end

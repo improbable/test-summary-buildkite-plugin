@@ -1,5 +1,7 @@
 # Test Summary Buildkite Plugin
 
+> **Note:** This fork has been modified to work with artifacts that have been uploaded from a Windows machine. The paths are not normalized and so the directory structure is flattened when downloaded on a Linux machine. To compensate for this, the `artifact_paths` field is ignored when _globbing_ the directory for test logs to parse (it is still respected for downloading!). This means that you _cannot_ deal with multiple types of test reporting in the same step.
+
 A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) that adds a single annotation
 for all your test failures using
 [buildkite-agent annotate](https://buildkite.com/docs/agent/v3/cli-annotate).
@@ -10,6 +12,7 @@ Supported formats:
 * Checkstyle
 * [TAP](https://testanything.org)^
 * Plain text files with one failure per line
+* NUnit
 
 \^ Current TAP support is fairly limited. If you have an example TAP file that is not being interpreted correctly,
 feel free to open an issue or pull request.
@@ -71,6 +74,9 @@ Add a build step using the test-summary plugin:
             - label: rubocop
               artifact_path: artifacts/rubocop.txt
               type: oneline
+            - label: nunit
+              artifact_path: artifacts/nunit.xml
+              type: nunit
           formatter:
             type: details
           context: test-summary
