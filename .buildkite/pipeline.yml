@@ -4,7 +4,7 @@ steps:
     timeout: 5
     artifact_paths: "artifacts/*"
     plugins:
-      - docker-compose#v2.4.0:
+      - docker-compose#v2.6.0:
           run: test
 
   - label: ":rubocop: rubocop"
@@ -12,7 +12,7 @@ steps:
     timeout: 5
     artifact_paths: "artifacts/*"
     plugins:
-      - docker-compose#v2.4.0:
+      - docker-compose#v2.6.0:
           run: test
 
   - label: ":sparkles: plugin lint"
