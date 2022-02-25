@@ -17,7 +17,7 @@ steps:
 
   - label: ":sparkles: plugin lint"
     plugins:
-      - plugin-linter#v2.0.0:
+      - plugin-linter#v3.0.0:
           id: bugcrowd/test-summary
 
   - label: ":arrow_up: artifacts"
